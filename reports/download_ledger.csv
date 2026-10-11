@@ -1,0 +1,6 @@
+timestamp,file,bytes_fetched,cumulative_bytes
+2026-10-05T07:20:44Z,lanl-2015/redteam.txt,22986,22986
+2026-10-05T07:24:16Z,lanl-2015/redteam.txt,22986,45972
+2026-10-05T07:32:50Z,lanl-2015/flows.txt [pilot],31457280,31503252
+2026-10-05T08:07:47Z,lanl-2015/flows.txt [slice],1733391808,1764895060
+2026-10-05T08:08:48Z,lanl-2015/dns.txt.gz,185104940,1950000000

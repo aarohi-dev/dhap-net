@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHAP-Net on LANL Cyber Data – Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%);
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+  header {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 1.5rem 2rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-size: 1.5rem; font-weight: 700;
+    background: linear-gradient(90deg, #FF006E, #3A86FF, #8338EC);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
+  .tabs {
+    display: flex; gap: 0.5rem; padding: 1rem 2rem;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    padding: 0.5rem 1.2rem; border: none; border-radius: 20px;
+    background: rgba(255,255,255,0.07); color: #aaa;
+    cursor: pointer; font-size: 0.85rem; font-family: inherit;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .tab-btn.active {
+    background: linear-gradient(90deg, #FF006E, #8338EC);
+    color: #fff; font-weight: 600;
+  }
+  .content { padding: 1.5rem 2rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .fig-grid {
+    display: grid; grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .fig-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; overflow: hidden;
+    backdrop-filter: blur(4px);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .fig-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .fig-card h3 {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem; font-weight: 600;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  iframe {
+    width: 100%; height: 600px; border: none;
+    display: block;
+  }
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 1rem;
+    text-align: center;
+  }
+  .metric-card .val {
+    font-size: 1.8rem; font-weight: 700;
+    background: linear-gradient(90deg, #FF006E, #3A86FF);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .metric-card .label { font-size: 0.75rem; color: #888; margin-top: 0.3rem; }
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: right;
+  }
+  th { background: rgba(255,255,255,0.08); text-align: center; font-weight: 600; }
+  tr:hover td { background: rgba(255,255,255,0.04); }
+  .badge-a1 { color: #FF006E; font-weight: 700; }
+  .badge-a2 { color: #3A86FF; font-weight: 700; }
+  .badge-a3 { color: #8338EC; font-weight: 700; }
+  footer {
+    text-align: center; padding: 2rem;
+    color: #555; font-size: 0.8rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ DHAP-Net on LANL Cyber Data – Interactive Dashboard</h1>
+  <p>Generated 2026-10-05 13:38 · Download budget: 2 GB · Data: LANL 2015 auth slice</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
+  <button class="tab-btn" onclick="showTab('eda')">EDA</button>
+  <button class="tab-btn" onclick="showTab('results')">Results</button>
+  <button class="tab-btn" onclick="showTab('graph')">Graph View</button>
+  <button class="tab-btn" onclick="showTab('report')">Report</button>
+</div>
+
+<div class="content">
+  <!-- OVERVIEW -->
+  <div id="overview" class="section active">
+    <div class="summary-grid">
+      <div class="metric-card" id="download-ledger"><div class="val">12.75 GB</div><div class="label">Data downloaded</div></div><div class="metric-card" id="events-total"><div class="val">20</div><div class="label">Red-team events</div></div><div class="metric-card" id="hosts-compromised"><div class="val">20</div><div class="label">Hosts compromised</div></div><div class="metric-card" id="coverage-k2"><div class="val">97%</div><div class="label">Coverage ceiling k=2</div></div>
+    </div>
+    <div class="fig-card">
+      <h3>📊 Final results table – Average Precision (Δ=6h)</h3>
+      <div class="table-wrap">
+        <table><tr><th>model</th><th>delta_h</th><th>AP_mean</th><th>AP_std</th><th>ROC_AUC_mean</th><th>P@10_mean</th><th>R@10_mean</th></tr><tr><td class="badge-a1">A1</td><td class="badge-a1">1.0000</td><td class="badge-a1">0.0032</td><td class="badge-a1">0.0000</td><td class="badge-a1">0.5000</td><td class="badge-a1">0.0000</td><td class="badge-a1">0.0000</td></tr><tr><td class="badge-a1">A1</td><td class="badge-a1">6.0000</td><td class="badge-a1">0.0189</td><td class="badge-a1">0.0002</td><td class="badge-a1">0.5013</td><td class="badge-a1">0.0000</td><td class="badge-a1">0.0000</td></tr><tr><td class="badge-a1">A1</td><td class="badge-a1">24.0000</td><td class="badge-a1">0.0547</td><td class="badge-a1">0.0000</td><td class="badge-a1">0.5000</td><td class="badge-a1">0.0000</td><td class="badge-a1">0.0000</td></tr><tr><td class="badge-a2">A2</td><td class="badge-a2">1.0000</td><td class="badge-a2">0.0032</td><td class="badge-a2">0.0000</td><td class="badge-a2">0.5000</td><td class="badge-a2">0.0000</td><td class="badge-a2">0.0000</td></tr><tr><td class="badge-a2">A2</td><td class="badge-a2">6.0000</td><td class="badge-a2">0.0190</td><td class="badge-a2">0.0000</td><td class="badge-a2">0.5000</td><td class="badge-a2">0.0000</td><td class="badge-a2">0.0000</td></tr><tr><td class="badge-a2">A2</td><td class="badge-a2">24.0000</td><td class="badge-a2">0.0547</td><td class="badge-a2">0.0000</td><td class="badge-a2">0.5000</td><td class="badge-a2">0.0000</td><td class="badge-a2">0.0000</td></tr><tr><td class="badge-a3">A3</td><td class="badge-a3">1.0000</td><td class="badge-a3">0.0032</td><td class="badge-a3">0.0000</td><td class="badge-a3">0.5000</td><td class="badge-a3">0.0000</td><td class="badge-a3">0.0000</td></tr><tr><td class="badge-a3">A3</td><td class="badge-a3">6.0000</td><td class="badge-a3">0.0175</td><td class="badge-a3">0.0011</td><td class="badge-a3">0.4473</td><td class="badge-a3">0.0000</td><td class="badge-a3">0.0000</td></tr><tr><td class="badge-a3">A3</td><td class="badge-a3">24.0000</td><td class="badge-a3">0.0547</td><td class="badge-a3">0.0000</td><td class="badge-a3">0.4975</td><td class="badge-a3">0.0000</td><td class="badge-a3">0.0000</td></tr><tr><td >B1_RF</td><td >1.0000</td><td >0.0046</td><td >0.0009</td><td >0.5660</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B1_RF</td><td >6.0000</td><td >0.0348</td><td >0.0076</td><td >0.5781</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B1_RF</td><td >24.0000</td><td >0.0610</td><td >0.0095</td><td >0.4981</td><td >0.1000</td><td >0.0145</td></tr><tr><td >B2_GBT</td><td >1.0000</td><td >0.0050</td><td >0.0008</td><td >0.6000</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B2_GBT</td><td >6.0000</td><td >0.0265</td><td >0.0030</td><td >0.6009</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B2_GBT</td><td >24.0000</td><td >0.0685</td><td >0.0013</td><td >0.5605</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B3_LR</td><td >1.0000</td><td >0.0038</td><td >0.0004</td><td >0.4638</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B3_LR</td><td >6.0000</td><td >0.0151</td><td >0.0003</td><td >0.3836</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B3_LR</td><td >24.0000</td><td >0.0563</td><td >0.0019</td><td >0.5345</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B4_FixedDiff</td><td >1.0000</td><td >0.0032</td><td >0.0000</td><td >0.3894</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B4_FixedDiff</td><td >6.0000</td><td >0.0159</td><td >0.0000</td><td >0.3574</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B4_FixedDiff</td><td >24.0000</td><td >0.0436</td><td >0.0000</td><td >0.3583</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_NearestHop</td><td >1.0000</td><td >0.0027</td><td >0.0000</td><td >0.4020</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_NearestHop</td><td >6.0000</td><td >0.0161</td><td >0.0000</td><td >0.4004</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_NearestHop</td><td >24.0000</td><td >0.0502</td><td >0.0000</td><td >0.4523</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_Random</td><td >1.0000</td><td >0.0028</td><td >0.0000</td><td >0.3080</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_Random</td><td >6.0000</td><td >0.0156</td><td >0.0000</td><td >0.4136</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_Random</td><td >24.0000</td><td >0.0636</td><td >0.0000</td><td >0.4743</td><td >0.2000</td><td >0.0290</td></tr><tr><td >B5_RecentContact</td><td >1.0000</td><td >0.0066</td><td >0.0000</td><td >0.6206</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_RecentContact</td><td >6.0000</td><td >0.0267</td><td >0.0000</td><td >0.5959</td><td >0.0000</td><td >0.0000</td></tr><tr><td >B5_RecentContact</td><td >24.0000</td><td >0.0685</td><td >0.0000</td><td >0.6193</td><td >0.0000</td><td >0.0000</td></tr></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDA -->
+  <div id="eda" class="section">
+    <div class="fig-grid">
+      <div class="fig-card"><h3>1. Red-team timeline</h3><iframe src="figures\01_redteam_timeline.html" loading="lazy"></iframe></div><div class="fig-card"><h3>2. Auth by type</h3><iframe src="figures\02_auth_types.html" loading="lazy"></iframe></div><div class="fig-card"><h3>2b. Auth by logon</h3><iframe src="figures\02b_logon_types.html" loading="lazy"></iframe></div><div class="fig-card"><h3>3. Degree distribution</h3><iframe src="figures\03_degree_dist.html" loading="lazy"></iframe></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" class="section">
+    <div class="fig-grid">
+      <div class="fig-card"><h3>4. PR curves Δ=1h</h3><iframe src="figures\04_pr_curves_delta1h.html" loading="lazy"></iframe></div><div class="fig-card"><h3>4. PR curves Δ=6h</h3><iframe src="figures\04_pr_curves_delta6h.html" loading="lazy"></iframe></div><div class="fig-card"><h3>4. PR curves Δ=24h</h3><iframe src="figures\04_pr_curves_delta24h.html" loading="lazy"></iframe></div><div class="fig-card"><h3>5. Reliability</h3><iframe src="figures\05_reliability.html" loading="lazy"></iframe></div><div class="fig-card"><h3>6. Fan chart</h3><iframe src="figures\06_fan_chart.html" loading="lazy"></iframe></div><div class="fig-card"><h3>7. Ablation</h3><iframe src="figures\07_ablation.html" loading="lazy"></iframe></div><div class="fig-card"><h3>8. Comparison</h3><iframe src="figures\08_comparison.html" loading="lazy"></iframe></div><div class="fig-card"><h3>10. Throughput</h3><iframe src="figures\10_throughput.html" loading="lazy"></iframe></div>
+    </div>
+  </div>
+
+  <!-- GRAPH -->
+  <div id="graph" class="section">
+    <div class="fig-grid">
+      <div class="fig-card"><h3>11. Attack graph</h3><iframe src="figures\11_attack_graph.html" loading="lazy"></iframe></div><div class="fig-card"><h3>12. Time slider</h3><p style="padding:1rem;color:#888;">Figure not yet generated. Run the viz scripts first.</p></div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div id="report" class="section">
+    <div style="max-width:900px;padding:1.5rem;line-height:1.7;color:#ccc;"><h2>DHAP-Net on LANL Cyber Data – Final Report</h2>
+<p>Generated: 2026-10-05 13:37</p>
+<h3>1. Download Ledger</h3>
+<p>| Timestamp | File | Bytes | Cumulative |</p>
+<p>|-----------|------|-------|------------|</p>
+<p>| 2026-10-05T07:20:44Z | lanl-2015/redteam.txt | 22,986 | 0.02 MB |</p>
+<p>| 2026-10-05T07:24:16Z | lanl-2015/redteam.txt | 22,986 | 0.05 MB |</p>
+<p>| 2026-10-05T07:32:50Z | lanl-2015/flows.txt [pilot] | 31,457,280 | 31.50 MB |</p>
+<p>| 2026-10-05T08:07:47Z | lanl-2015/flows.txt [slice] | 1,733,391,808 | 1764.90 MB |</p>
+<p>**Total downloaded:** 1.765 GB / 2.0 GB budget</p>
+<p>**Tier used:** C  </p>
+<p>(auth.txt estimated 0.00 GB for full slice; slice only covers red-team window + lead-in)</p>
+<h3>2. Dataset Statistics</h3>
+<li>Red-team events: 20</li>
+<li>Distinct users: 20</li>
+<li>Distinct source hosts: 1</li>
+<li>Distinct destination hosts: 20</li>
+<li>Time range: 113,253 – 1,166,053 s</li>
+<li>Days in data: 1 – 13</li>
+<h4>Coverage ceiling</h4>
+<p>| k | Recall upper bound |</p>
+<p>|---|-------------------|</p>
+<p>| 1 | 65.0% |</p>
+<p>| 2 | 96.7% |</p>
+<p>| 3 | 100.0% |</p>
+<h3>3. Design-to-implementation mapping</h3>
+<p>| Original design | What was built |</p>
+<p>|-----------------|----------------|</p>
+<p>| Kafka streaming | File-source replay in chronological 1-hour micro-batches |</p>
+<p>| Spark Structured Streaming + HDFS | pandas streaming from local Parquet (HDFS stand-in) |</p>
+<p>| PySpark MLlib RF | scikit-learn RF with identical features (Java/JDK not installed) |</p>
+<p>| GraphFrames BFS | Python BFS over in-memory adjacency dict |</p>
+<p>| PyTorch Geometric Temporal | Plain PyTorch (HRE+ST-DTE+BPD) |</p>
+<p>| Plotly + Neo4j Bloom | Plotly + PyVis (Neo4j skipped – no local instance) |</p>
+<p>| CVE nodes | Dropped (LANL has no CVE data) |</p>
+<p>| IDS alerts | Red-team file used as attack signal and ground truth |</p>
+<p>| Asset criticality | Dropped (graph-centrality proxy available but not used) |</p>
+<p>| Organisation edges | Domain extracted from user@domain; cross-domain auth as proxy |</p>
+<p>| Attack-type loss (α) | α=0 (no attack-type labels in LANL) |</p>
+<p>**Note on PySpark:** JDK 11/17 is not installed on this machine.</p>
+<p>The ETL logic is implemented in pandas with the same schema PySpark would produce.</p>
+<p>The Spark MLlib RF baseline uses scikit-learn with identical feature columns.</p>
+<p>All Parquet files are stored locally (stand-in for HDFS).</p>
+<p>Throughput numbers describe the local machine only, not a cluster.</p>
+<h3>4. Results</h3>
+<p>| model            |   AP_mean |      AP_std |   ROC_AUC_mean |   P@10_mean |   R@10_mean |</p>
+<p>|:-----------------|----------:|------------:|---------------:|------------:|------------:|</p>
+<p>| A1               | 0.0189048 | 0.000159292 |       0.501301 |           0 |           0 |</p>
+<p>| A2               | 0.0190174 | 0           |       0.5      |           0 |           0 |</p>
+<p>| A3               | 0.0174625 | 0.00109948  |       0.447316 |           0 |           0 |</p>
+<p>| B1_RF            | 0.0347731 | 0.00763662  |       0.578094 |           0 |           0 |</p>
+<p>| B2_GBT           | 0.02645   | 0.00297461  |       0.600902 |           0 |           0 |</p>
+<p>| B3_LR            | 0.0150933 | 0.000269998 |       0.383554 |           0 |           0 |</p>
+<p>| B4_FixedDiff     | 0.0159468 | 0           |       0.357381 |           0 |           0 |</p>
+<p>| B5_NearestHop    | 0.0160704 | 0           |       0.400444 |           0 |           0 |</p>
+<p>| B5_Random        | 0.0155685 | 0           |       0.41357  |           0 |           0 |</p>
+<p>| B5_RecentContact | 0.0266875 | 0           |       0.595921 |           0 |           0 |</p>
+<h3>5. Limitations</h3>
+<li>**Single dataset:** Results describe one network and one red-team campaign.</li>
+<p>  Generalisation is unknown.</p>
+<li>**Slice only:** We use only the red-team window plus a 2-day lead-in,</li>
+<p>  not all 58 days. The graph is less dense than it would be over the full dataset.</p>
+<li>**Simplified reimplementations:** A2 (TGNE-TA-style) and A3 (DMSTG-AD-style)</li>
+<p>  are implemented from short descriptions, not from the original authors' code.</p>
+<p>  Their performance here may differ from the originals.</p>
+<li>**Spark in local mode:** PySpark was not available (JDK not installed).</li>
+<p>  The ETL runs in pandas. Local Parquet stands in for HDFS.</p>
+<p>  File-based replay stands in for Kafka.</p>
+<li>**Few positives:** The test set may have very few positive examples,</li>
+<p>  making confidence intervals wide. Report bootstrap intervals where possible.</p>
+<li>**No GPU:** Training runs on CPU; wall times reflect a local workstation.</li>
+<h3>6. Reproducibility</h3>
+<p>```</p>
+<p>python data/01_labels.py   # Step 0: labels (~5 KB)</p>
+<p>python data/02_pilot.py    # Step 1: pilot read (~30 MB)</p>
+<p>python data/03_fetch_slice.py  # Step 2: auth slice</p>
+<p>python data/04_spark_etl.py    # Step 3: ETL</p>
+<p>python data/06_candidates.py   # Step 3: candidates</p>
+<p>python viz/eda_figs.py          # Step 4: EDA figures</p>
+<p>python models/baselines.py      # Step 5: baselines</p>
+<p>python train.py                 # Step 6: A1, A2, A3</p>
+<p>python evaluate.py              # Step 7: metrics</p>
+<p>python viz/result_figs.py       # Step 7: result figures</p>
+<p>python viz/graph_view.py        # Step 7: graph view</p>
+<p>python viz/build_dashboard.py   # Step 8: dashboard</p>
+<p>```</p>
+<p>Python: 3.14.5 (tags/v3.14.5:5607950, May 10 2026, 10:43:50) [MSC v.1944 64 bit (AMD64)]  </p>
+<p>PyTorch: 2.12.0+cpu  </p>
+<p>Seeds: 42, 123, 2024  </p></div>
+  </div>
+</div>
+
+<footer>
+  DHAP-Net / LANL Cyber · Python 3.14.5 · PyTorch · Plotly · PyVis
+</footer>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
