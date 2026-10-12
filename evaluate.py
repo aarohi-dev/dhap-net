@@ -7,10 +7,11 @@ Reads from reports/tables/ and reports/data/
 Writes: reports/tables/final_results.csv, ablation.csv, calibration.csv
 """
 
-import sys, json, collections
+import sys, json, collections, io
 from pathlib import Path
 from itertools import product
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from configs.config import REPORTS_DIR, DATA_OUT, DELTAS, SEEDS, TOP_K
 

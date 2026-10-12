@@ -1,4 +1,4 @@
-﻿"""
+"""
 pipeline/04_spark_streaming.py
 ───────────────────────────────
 Spark Structured Streaming consumer.
@@ -250,24 +250,53 @@ def run_kafka_streaming(spark, local: bool):
     spark.streams.awaitAnyTermination()
 
 
+def run_pandas_graph_fallback(flows_parquet: str):
+    """
+    Pandas/PyArrow fallback when PySpark is not installed locally.
+    Validates aggregated flows and demonstrates basic graph statistics.
+    """
+    import pandas as pd
+    print(f"\n[Spark-Fallback] Reading {flows_parquet} via pandas/pyarrow ...")
+    df = pd.read_parquet(flows_parquet)
+    print(f"[Spark-Fallback] Loaded {len(df):,} aggregated flow rows")
+
+    vertices = set(df["src"].unique()).union(set(df["dst"].unique()))
+    print(f"[Spark-Fallback] Graph: {len(vertices):,} unique hosts, {len(df):,} aggregated edges")
+
+    in_deg = df.groupby("dst")["n_flows"].sum().sort_values(ascending=False)
+    out_deg = df.groupby("src")["n_flows"].sum().sort_values(ascending=False)
+    print(f"[Spark-Fallback] Max in-degree  : {in_deg.iloc[0] if not in_deg.empty else 0:,}")
+    print(f"[Spark-Fallback] Max out-degree : {out_deg.iloc[0] if not out_deg.empty else 0:,}")
+
+    print("\n[Spark-Fallback] Top 5 in-degree destinations:")
+    for host, count in in_deg.head(5).items():
+        print(f"  {host}: {count:,} flows")
+
+    print("\n[Spark] OK Done (pandas fallback).  Next: python pipeline/05_graphframes_candidates.py")
+
+
 def run_parquet_fallback(local: bool):
     """
     Fallback: read already-aggregated Parquet (from 02_etl_flows.py)
     and run GraphFrames on it to demonstrate graph operations.
     Used when Kafka is not yet running.
     """
-    from pyspark.sql import SparkSession
-    from pyspark.sql import functions as F
-
-    print("\n[Spark] Running in PARQUET FALLBACK mode (no Kafka).")
-    spark = build_spark(local=True)
-    spark.sparkContext.setLogLevel("WARN")
-
     flows_parquet = str(PARQUET_DIR / "flows" / "flows_agg.parquet")
     if not Path(flows_parquet).exists():
         print(f"[Spark] ERROR: Parquet not found at {flows_parquet}")
         print("  Run: python pipeline/02_etl_flows.py  first.")
-        spark.stop()
+        return
+
+    try:
+        from pyspark.sql import SparkSession
+        from pyspark.sql import functions as F
+        print("\n[Spark] Running in PARQUET FALLBACK mode (no Kafka).")
+        spark = build_spark(local=True)
+        spark.sparkContext.setLogLevel("WARN")
+    except (ImportError, Exception) as e:
+        print(f"\n[Spark] PySpark / Java not available ({e}).")
+        print("[Spark] Falling back to pandas/pyarrow for graph operations demonstration.")
+        run_pandas_graph_fallback(flows_parquet)
         return
 
     df = spark.read.parquet(flows_parquet)
@@ -354,9 +383,14 @@ def main():
         run_parquet_fallback(local=args.local)
         return
 
-    spark = build_spark(local=args.local)
-    spark.sparkContext.setLogLevel("WARN")
-    run_kafka_streaming(spark, local=args.local)
+    try:
+        spark = build_spark(local=args.local)
+        spark.sparkContext.setLogLevel("WARN")
+        run_kafka_streaming(spark, local=args.local)
+    except (ImportError, Exception) as e:
+        print(f"\n[Spark] PySpark / Java not available ({e}).")
+        print("[Spark] Switching to Parquet fallback mode.")
+        run_parquet_fallback(local=args.local)
 
 
 if __name__ == "__main__":

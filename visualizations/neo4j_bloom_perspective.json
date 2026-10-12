@@ -1,0 +1,55 @@
+{
+  "perspectiveName": "DHAP-Net Cyber Attack Propagation",
+  "description": "Visualizing lateral movement paths, compromised seeds, and Bayesian candidate risk distributions.",
+  "categories": [
+    {
+      "name": "Host",
+      "color": "#3A86FF",
+      "caption": [
+        "host_id"
+      ],
+      "ruleStyles": [
+        {
+          "rule": "is_compromised = true",
+          "color": "#FF006E",
+          "size": 1.5,
+          "icon": "skull-crossbones"
+        },
+        {
+          "rule": "propagation_prob >= 0.05",
+          "color": "#FFB703",
+          "size": 1.2,
+          "icon": "exclamation-triangle"
+        },
+        {
+          "rule": "propagation_prob < 0.05",
+          "color": "#06D6A0",
+          "size": 1.0,
+          "icon": "server"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "COMPROMISED",
+      "color": "#FF006E",
+      "style": "solid",
+      "width": 2.5,
+      "caption": "user"
+    },
+    {
+      "type": "SIMULATED_PROPAGATION",
+      "color": "#8338EC",
+      "style": "dashed",
+      "width": 1.5,
+      "caption": "propagation_prob"
+    },
+    {
+      "type": "COMMUNICATES_WITH",
+      "color": "#4A5568",
+      "style": "solid",
+      "width": 0.8
+    }
+  ]
+}

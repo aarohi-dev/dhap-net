@@ -7,9 +7,10 @@ EDA figures (Section 6.5 A):
 Run: python viz/eda_figs.py
 """
 
-import sys, json
+import sys, json, io
 from pathlib import Path
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from configs.config import DATA_DIR, PARQUET_DIR, REPORTS_DIR, FIGURES_DIR
 

@@ -1,4 +1,4 @@
-﻿"""
+"""
 pipeline/07_mllib_baseline.py
 ──────────────────────────────
 Spark MLlib Random Forest baseline.
@@ -31,6 +31,7 @@ Usage:
 import sys, json, io, time
 from pathlib import Path
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from configs.config import (

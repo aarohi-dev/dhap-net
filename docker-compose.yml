@@ -130,7 +130,7 @@ services:
 
   # ── Apache Spark Master ─────────────────────────────────────────────────────
   spark-master:
-    image: bitnami/spark:3.5.1
+    image: bitnamilegacy/spark:3.5.1
     container_name: dhapnet-spark-master
     hostname: spark-master
     networks:
@@ -157,7 +157,7 @@ services:
 
   # ── Apache Spark Worker ─────────────────────────────────────────────────────
   spark-worker:
-    image: bitnami/spark:3.5.1
+    image: bitnamilegacy/spark:3.5.1
     container_name: dhapnet-spark-worker
     hostname: spark-worker
     depends_on:

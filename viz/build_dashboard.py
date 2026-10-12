@@ -64,6 +64,7 @@ def fig_dataset_stats():
 
     fig = make_subplots(
         rows=1, cols=2,
+        specs=[[{"type": "domain"}, {"type": "xy"}]],
         subplot_titles=["Protocol Distribution (aggregated flows)",
                         "ETL Processing Summary"]
     )

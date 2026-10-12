@@ -11,9 +11,10 @@ Result figures (Section 6.5 B):
 Run: python viz/result_figs.py
 """
 
-import sys, json, re
+import sys, json, re, io
 from pathlib import Path
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from configs.config import REPORTS_DIR, FIGURES_DIR, DELTAS, SEEDS
 

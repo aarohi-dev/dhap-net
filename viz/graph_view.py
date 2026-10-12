@@ -11,9 +11,10 @@ Uses Plotly for the time-slider animation.
 Run: python viz/graph_view.py
 """
 
-import sys, json, collections
+import sys, json, collections, io
 from pathlib import Path
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from configs.config import (
     DATA_DIR, PARQUET_DIR, REPORTS_DIR, FIGURES_DIR,
@@ -37,6 +38,10 @@ EDGE_COLORS = {
     "auth": "#3A86FF",
     "user_logon": "#8338EC",
     "comm": "#06D6A0",
+    "flow": "#06D6A0",
+    "6": "#3A86FF",       # TCP
+    "17": "#FFB703",      # UDP
+    "1": "#E63946",       # ICMP
     "dns_lookup": "#FFB703",
     "belongs_to": "#FB8500",
 }
@@ -64,8 +69,10 @@ def build_neighbourhood(auth_df: pd.DataFrame,
     # Build adjacency
     adj = collections.defaultdict(set)
     for _, row in w_df.iterrows():
-        if pd.notna(row["src_host"]) and pd.notna(row["dst_host"]):
-            adj[row["src_host"]].add(row["dst_host"])
+        s = row.get("src_host", row.get("src", None))
+        d = row.get("dst_host", row.get("dst", None))
+        if pd.notna(s) and pd.notna(d):
+            adj[s].add(d)
 
     # BFS from C_t
     nodes_in_graph = set(C_t)
@@ -96,11 +103,11 @@ def build_neighbourhood(auth_df: pd.DataFrame,
 
     edges = []
     for _, row in w_df.iterrows():
-        src = row.get("src_host", "")
-        dst = row.get("dst_host", "")
+        src = row.get("src_host", row.get("src", ""))
+        dst = row.get("dst_host", row.get("dst", ""))
         if src in nodes and dst in nodes and src != dst:
-            atype = str(row.get("auth_type", "auth"))
-            edges.append({"src": src, "dst": dst, "rel": f"auth_{atype}"})
+            proto = str(row.get("protocol", row.get("auth_type", "comm")))
+            edges.append({"src": src, "dst": dst, "rel": f"flow_{proto}"})
 
     return nodes, edges
 
@@ -241,10 +248,18 @@ def make_time_slider(auth_df: pd.DataFrame, compr_times: dict,
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    auth_path = PARQUET_DIR / "auth" / "auth_agg.parquet"
-    rt_path   = DATA_DIR / "redteam_labels.csv"
+    auth_path  = PARQUET_DIR / "auth" / "auth_agg.parquet"
+    flows_path = PARQUET_DIR / "flows" / "flows_agg.parquet"
+    rt_path    = DATA_DIR / "redteam_labels.csv"
 
-    if not auth_path.exists() or not rt_path.exists():
+    if auth_path.exists():
+        auth_df = pd.read_parquet(str(auth_path))
+    elif flows_path.exists():
+        auth_df = pd.read_parquet(str(flows_path))
+    else:
+        auth_df = None
+
+    if auth_df is None or not rt_path.exists():
         print("[Graph] Data not found. Run ETL and data scripts first.")
         print("[Graph] Generating placeholder graph …")
         # Placeholder graph for demonstration
@@ -264,8 +279,7 @@ def main():
         make_pyvis_graph(nodes, edges, "Placeholder attack propagation graph")
         return
 
-    auth_df = pd.read_parquet(str(auth_path))
-    rt      = pd.read_csv(rt_path)
+    rt = pd.read_csv(rt_path)
     compr_times = rt.groupby("dst")["time"].min().to_dict()
     src_only = set(rt["src"].unique()) - set(rt["dst"].unique())
     for h in src_only:
