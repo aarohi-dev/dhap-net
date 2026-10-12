@@ -40,7 +40,7 @@ reports/data/train.parquet
 reports/data/val.parquet
 reports/data/test.parquet
 reports/data/candidates_all.parquet
-
+reports/data/flows.txt
 # ─── Generated Figures (large Plotly HTML bundles ~4–5 MB each) ───────────────
 reports/figures/
 
@@ -67,4 +67,6 @@ desktop.ini
 # ─── Misc ─────────────────────────────────────────────────────────────────────
 *.log
 *.tmp
-*.bak
+*.bak  
+
+

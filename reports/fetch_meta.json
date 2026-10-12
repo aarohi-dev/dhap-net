@@ -1,9 +1,23 @@
 {
-  "t_start": 0,
-  "t_end": 1296000,
-  "flows_bytes": 1733391808,
-  "dns_bytes": 185104940,
-  "cumulative_bytes": 1950000000,
-  "flows_out": "E:\\GitHub\\dhap-net\\data\\raw\\flows_slice.txt",
-  "dns_out": "E:\\GitHub\\dhap-net\\data\\raw\\dns.txt.gz"
+  "source": "E:\\GitHub\\dhap-net\\reports\\data\\flows.txt",
+  "size_bytes": 5237189507,
+  "raw_lines": 129977412,
+  "malformed": 0,
+  "agg_rows": 14828668,
+  "hour_min": 0,
+  "hour_max": 868,
+  "day_min": 0,
+  "day_max": 36,
+  "unique_src": 11154,
+  "unique_dst": 8711,
+  "protocols": {
+    "6": 116550579,
+    "17": 10104702,
+    "1": 3321625,
+    "41": 506
+  },
+  "etl_seconds": 686.5,
+  "schema": "time,duration,src,src_port,dst,dst_port,protocol,packets,bytes",
+  "dataset": "LANL Unified Host and Network Dataset (netflow)",
+  "labels": "redteam.txt (confirmed red-team authentication events)"
 }

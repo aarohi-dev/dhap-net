@@ -1,0 +1,206 @@
+---
+# DHAP-Net Infrastructure Stack
+# Services: Kafka + Zookeeper, Spark (master + worker), HDFS (namenode + datanode), Neo4j
+#
+# Usage:
+#   docker compose up -d
+#   docker compose ps
+#   docker compose down -v    (removes volumes)
+#
+# Port map:
+#   Kafka broker       : localhost:9092
+#   Spark master UI    : localhost:8080
+#   Spark master RPC   : localhost:7077
+#   HDFS NameNode UI   : localhost:9870
+#   HDFS NameNode RPC  : localhost:9000
+#   Neo4j Browser      : localhost:7474
+#   Neo4j Bolt         : localhost:7687
+
+networks:
+  dhapnet:
+    driver: bridge
+
+volumes:
+  hdfs_namenode:
+  hdfs_datanode:
+  neo4j_data:
+  neo4j_logs:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_txlog:
+
+services:
+
+  # ── Zookeeper (required by Kafka) ───────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    hostname: zookeeper
+    container_name: dhapnet-zookeeper
+    networks:
+      - dhapnet
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_txlog:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo 'ruok' | nc -w 2 localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Kafka Broker ────────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    hostname: kafka
+    container_name: dhapnet-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      - dhapnet
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: -1
+      KAFKA_MESSAGE_MAX_BYTES: 10485760
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 10485760
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── HDFS NameNode ───────────────────────────────────────────────────────────
+  hdfs-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: dhapnet-namenode
+    hostname: namenode
+    networks:
+      - dhapnet
+    ports:
+      - "9870:9870"   # NameNode web UI
+      - "9000:9000"   # NameNode RPC (hdfs://namenode:9000)
+    volumes:
+      - hdfs_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=dhapnet
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+      - HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ── HDFS DataNode ───────────────────────────────────────────────────────────
+  hdfs-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: dhapnet-datanode
+    hostname: datanode
+    depends_on:
+      hdfs-namenode:
+        condition: service_healthy
+    networks:
+      - dhapnet
+    volumes:
+      - hdfs_datanode:/hadoop/dfs/data
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+
+  # ── Apache Spark Master ─────────────────────────────────────────────────────
+  spark-master:
+    image: bitnami/spark:3.5.1
+    container_name: dhapnet-spark-master
+    hostname: spark-master
+    networks:
+      - dhapnet
+    ports:
+      - "8080:8080"   # Spark Master UI
+      - "7077:7077"   # Spark Master RPC
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_MASTER_HOST=spark-master
+      # Kafka + HDFS integration jars
+      - SPARK_EXTRA_CLASSPATH=/opt/bitnami/spark/jars/*
+    volumes:
+      - ./:/workspace
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Apache Spark Worker ─────────────────────────────────────────────────────
+  spark-worker:
+    image: bitnami/spark:3.5.1
+    container_name: dhapnet-spark-worker
+    hostname: spark-worker
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    networks:
+      - dhapnet
+    ports:
+      - "8081:8081"   # Spark Worker UI
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    volumes:
+      - ./:/workspace
+
+  # ── Neo4j ───────────────────────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5.19.0-community
+    container_name: dhapnet-neo4j
+    hostname: neo4j
+    networks:
+      - dhapnet
+    ports:
+      - "7474:7474"   # HTTP Browser
+      - "7687:7687"   # Bolt protocol
+    environment:
+      NEO4J_AUTH: neo4j/dhapnet2024
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1g
+      NEO4J_dbms_memory_pagecache_size: 512m
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "dhapnet2024", "RETURN 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10

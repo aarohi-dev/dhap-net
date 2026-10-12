@@ -2,10 +2,10 @@
   "t_first_redteam": 150885,
   "t_last_redteam": 2557047,
   "t_start": 0,
-  "t_end": 1296000,
+  "t_end": 2560647,
   "lead_in_days": 2,
-  "slice_days": 15.0,
-  "t_end_trimmed": true,
-  "rt_events_covered": 663,
-  "rt_events_total": 749
+  "slice_days": 29.637118055555554,
+  "rt_events": 749,
+  "rt_hosts_compromised": 301,
+  "rt_footholds": 4
 }
