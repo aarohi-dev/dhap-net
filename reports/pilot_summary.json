@@ -2,7 +2,7 @@
   "flows_file_size_bytes": 5237189507,
   "is_time_sorted": true,
   "bytes_per_day_flows": 111012089.69489034,
-  "estimated_flows_slice_bytes": 1683391808.0,
+  "estimated_flows_slice_bytes": -266585206.0,
   "dns_bytes": 185104940,
   "total_estimated_gb": 3.475183347881387,
   "recommended_tier": "C",

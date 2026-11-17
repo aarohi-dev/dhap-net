@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHAP-Net - Big Data Analytics & Visualization Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-card: #1e293b;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(56, 189, 248, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --accent-pink: #ec4899;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation Header */
+    header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 16px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #0284c7, #8b5cf6);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+    }
+
+    .title-group h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .title-group p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .header-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .header-btn:hover {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--primary);
+    }
+
+    /* KPI Highlights Ribbon */
+    .kpi-ribbon {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      padding: 24px 32px 12px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, transparent 100%);
+    }
+
+    .kpi-card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-accent);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+    }
+
+    .kpi-card.blue::before { background: var(--primary); }
+    .kpi-card.purple::before { background: var(--accent-purple); }
+    .kpi-card.pink::before { background: var(--accent-pink); }
+    .kpi-card.green::before { background: var(--accent-emerald); }
+    .kpi-card.amber::before { background: var(--accent-amber); }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Main Layout */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      padding: 16px 32px 32px;
+      flex: 1;
+    }
+
+    /* Sidebar Navigation */
+    .nav-panel {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-height: calc(100vh - 220px);
+      position: sticky;
+      top: 90px;
+      overflow-y: auto;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748b;
+      margin-bottom: 8px;
+      padding-left: 8px;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .badge-icon {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Content Area */
+    .viewport-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chart-header {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chart-info h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .chart-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .tool-tag {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Frame Wrapper */
+    .frame-container {
+      background: #020617;
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      overflow: hidden;
+      height: 680px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+    }
+
+    /* Architecture Explainer Card */
+    .explainer-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .explainer-card h3 {
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bigdata-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .tool-box {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .tool-box h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #38bdf8;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-box p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .cypher-block {
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="logo-badge">DHAP-NET</span>
+      <div class="title-group">
+        <h1>Comprehensive Big Data Analytics & Visualization Suite</h1>
+        <p>Review 2 Presentation Dashboard | SRM Institute of Science & Technology</p>
+      </div>
+    </div>
+    <div class="header-links">
+      <a class="header-btn" href="neo4j_attack_graph.cypher" download>
+        <span>⚡ Download Cypher Script</span>
+      </a>
+      <a class="header-btn" href="15_neo4j_bloom_view.html" target="_blank">
+        <span>🌐 Open Neo4j Bloom View</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- KPI Highlights Ribbon -->
+  <div class="kpi-ribbon">
+    <div class="kpi-card blue">
+      <div class="kpi-val">129.98M</div>
+      <div class="kpi-label">Raw NetFlow Records (5.24 GB)</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-val">14.83M</div>
+      <div class="kpi-label">Aggregated Edges (88.6% Compaction)</div>
+    </div>
+    <div class="kpi-card pink">
+      <div class="kpi-val">749 Events</div>
+      <div class="kpi-label">Confirmed Red-Team Attacks (301 Hosts)</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-val">415,728</div>
+      <div class="kpi-label">GraphFrames 2-Hop Candidate States</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-val">560k rec/s</div>
+      <div class="kpi-label">Kafka Replay Stream Throughput</div>
+    </div>
+  </div>
+
+  <div class="layout-grid">
+    <!-- Sidebar -->
+    <div class="nav-panel">
+      <div>
+        <div class="nav-section-title">1. Big Data Preprocessing</div>
+        <div class="nav-list">
+          <button class="nav-btn active" onclick="loadChart('01_dataset_stats.html', 'Dataset Statistics & Volume Compaction', 'Apache Spark / Parquet ETL', 'Shows raw 130M flow composition, 88.6% compaction to 14.8M hourly edges, and transport protocol distribution (TCP 89.7%, UDP 7.8%, ICMP 2.6%).')">
+            <span class="badge-icon">📊</span> 01. Dataset & Compaction
+          </button>
+          <button class="nav-btn" onclick="loadChart('02_redteam_timeline.html', 'Red-Team Attack Timeline', 'Ground Truth Labels', 'Hourly and daily progression of 749 red-team lateral movement events against background NetFlow traffic.')">
+            <span class="badge-icon">🎯</span> 02. Red-Team Timeline
+          </button>
+          <button class="nav-btn" onclick="loadChart('03_traffic_and_degree_dist.html', 'Network Topology & Degree Distribution', 'Graph Analysis', 'Log-log power-law in-degree and out-degree distributions of corporate hosts in enterprise LANL traffic.')">
+            <span class="badge-icon">📈</span> 03. Degree Distribution
+          </button>
+          <button class="nav-btn" onclick="loadChart('04_coverage_ceiling.html', 'K-Hop Theoretical Recall Ceiling', 'Spark GraphFrames BFS', 'Theoretical upper bound on lateral movement attack recall: k=1 hop achieves 19.3%, k=2 hops achieves optimal 49.2%.')">
+            <span class="badge-icon">🛡️</span> 04. Graph Reachability Ceiling
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-section-title">2. Model Evaluation (DHAP-Net)</div>
+        <div class="nav-list">
+          <button class="nav-btn" onclick="loadChart('05_pr_curves_delta1h.html', 'Precision-Recall Curves (Δ = 1 Hour)', 'GNN Classification', 'PR curves under extreme class imbalance (positive rate < 0.08%) across random seeds 42, 123, 2024.')">
+            <span class="badge-icon">📉</span> 05. PR Curves (Δ = 1h)
+          </button>
+          <button class="nav-btn" onclick="loadChart('06_pr_curves_delta6h.html', 'Precision-Recall Curves (Δ = 6 Hours)', 'GNN Classification', 'DHAP-Net multi-hop lateral movement precision-recall performance at 6-hour prediction horizon (AP = 0.0189).')">
+            <span class="badge-icon">📉</span> 06. PR Curves (Δ = 6h)
+          </button>
+          <button class="nav-btn" onclick="loadChart('07_pr_curves_delta24h.html', 'Precision-Recall Curves (Δ = 24 Hours)', 'GNN Classification', 'Long-term prediction horizon: DHAP-Net achieves AP = 0.0547 (17.1x gain over 1h horizon).')">
+            <span class="badge-icon">📉</span> 07. PR Curves (Δ = 24h)
+          </button>
+          <button class="nav-btn" onclick="loadChart('08_reliability_diagram.html', 'Reliability Diagram & Calibration', 'Bayesian BPD Head', 'Empirical probability calibration vs perfect diagonal; Brier score calibration comparison.')">
+            <span class="badge-icon">⚖️</span> 08. Reliability Diagram
+          </button>
+          <button class="nav-btn" onclick="loadChart('09_fan_chart_credible_intervals.html', 'Bayesian Credible Intervals (Fan Chart)', 'Gillespie M=1000 Rollouts', 'Continuous-time Bayesian propagation forecast with calibrated 90% Credible Intervals [p_lo, p_hi].')">
+            <span class="badge-icon">🌊</span> 09. 90% CI Fan Chart
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-section-title">3. Baselines & Benchmarks</div>
+        <div class="nav-list">
+          <button class="nav-btn" onclick="loadChart('10_ablation_study.html', 'Architectural Component Ablation Study', 'Pytorch Geometric / DHAP-Net', 'Isolating contributions: Full model vs w/o BPD Head, w/o HRE, w/o Node Memory, w/o Dilated TCN.')">
+            <span class="badge-icon">🔬</span> 10. Ablation Study
+          </button>
+          <button class="nav-btn" onclick="loadChart('11_model_comparison.html', 'Benchmark Model Comparison', 'Spark MLlib & Baselines', 'DHAP-Net compared against Spark MLlib Random Forest (200 trees), LightGBM, Logistic Regression, and Heuristics.')">
+            <span class="badge-icon">🏆</span> 11. Model Comparison
+          </button>
+          <button class="nav-btn" onclick="loadChart('12_streaming_throughput.html', 'Kafka Replay Stream Throughput', 'Apache Kafka / Producer', 'Real-time historical NetFlow replay throughput benchmark (events/sec and latency per micro-batch).')">
+            <span class="badge-icon">⚡</span> 12. Replay Throughput
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-section-title">4. Graph Databases & Visual Analytics</div>
+        <div class="nav-list">
+          <button class="nav-btn" onclick="loadChart('15_neo4j_bloom_view.html', 'Neo4j Bloom & Browser Visual Explorer', 'Neo4j Graph Database', 'Interactive graph topology simulating Neo4j Bloom with compromised footholds (stars), high-risk candidate targets, and communication links.')">
+            <span class="badge-icon">🌟</span> 13. Neo4j Bloom Visual View
+          </button>
+          <button class="nav-btn" onclick="loadChart('13_attack_graph_interactive.html', 'Dynamic Attack Topology (PyVis Physics)', 'PyVis / NetworkX', 'Force-directed attack graph with nodes colored by continuous Bayesian propagation risk scores.')">
+            <span class="badge-icon">🕸️</span> 14. Force-Directed Topology
+          </button>
+          <button class="nav-btn" onclick="loadChart('14_time_slider_animation.html', 'Risk Evolution Time-Slider Animation', 'Plotly Temporal Animation', 'Playable animation stepping through micro-batches to visualize lateral movement spreading across time.')">
+            <span class="badge-icon">⏱️</span> 15. Time-Slider Animation
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Viewport -->
+    <div class="viewport-panel">
+      <div class="chart-header">
+        <div class="chart-info">
+          <h2 id="chart-title">Dataset Statistics & Volume Compaction</h2>
+          <p id="chart-desc">Shows raw 130M flow composition, 88.6% compaction to 14.8M hourly edges, and transport protocol distribution (TCP 89.7%, UDP 7.8%, ICMP 2.6%).</p>
+        </div>
+        <div class="tool-tag" id="tool-tag">Apache Spark / Parquet ETL</div>
+      </div>
+
+      <div class="frame-container">
+        <iframe id="chart-frame" src="01_dataset_stats.html"></iframe>
+      </div>
+
+      <!-- Big Data Tools Architectural Breakdown -->
+      <div class="explainer-card">
+        <h3>🛠️ Big Data Tools Employed in DHAP-Net</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          The DHAP-Net pipeline integrates 6 specialized big data technologies across the ingestion, stream aggregation, distributed graph mining, machine learning, and visual analytics layers:
+        </p>
+
+        <div class="bigdata-grid">
+          <div class="tool-box">
+            <h4>1. Apache Kafka</h4>
+            <p><strong>Role:</strong> High-throughput distributed stream ingestion.<br>
+            <strong>Usage:</strong> Replays historical NetFlow events into topic <code>dhapnet.flows</code> with source-host partitioning, processing up to <strong>560,000 records/sec</strong> with zero data leakage.</p>
+          </div>
+
+          <div class="tool-box">
+            <h4>2. Spark Structured Streaming</h4>
+            <p><strong>Role:</strong> Rolling tumbling-window stream ETL.<br>
+            <strong>Usage:</strong> Consumes micro-batches, groups by <code>(hour, src, dst, protocol)</code>, reducing 130M flows down to <strong>14.8M compacted edges (88.6% reduction)</strong>.</p>
+          </div>
+
+          <div class="tool-box">
+            <h4>3. Hadoop HDFS</h4>
+            <p><strong>Role:</strong> Fault-tolerant distributed data storage.<br>
+            <strong>Usage:</strong> Stores partitioned micro-batched Parquet streams at <code>/dhapnet/flows</code>, enabling scalable distributed I/O across worker clusters.</p>
+          </div>
+
+          <div class="tool-box">
+            <h4>4. Spark GraphFrames</h4>
+            <p><strong>Role:</strong> Distributed BFS graph extraction.<br>
+            <strong>Usage:</strong> Computes $k=2$ hop candidate attack frontiers from compromised seed hosts $\mathcal{C}_t$, pruning 97.2% of non-viable host pairs and eliminating $\mathcal{O}(N^2)$ combinatorial explosion.</p>
+          </div>
+
+          <div class="tool-box">
+            <h4>5. Apache Spark MLlib</h4>
+            <p><strong>Role:</strong> Distributed baseline machine learning.<br>
+            <strong>Usage:</strong> Trains scalable Random Forest (200 trees) on distributed candidate feature vectors across multi-core Spark executors.</p>
+          </div>
+
+          <div class="tool-box">
+            <h4>6. Neo4j (Browser & Bloom)</h4>
+            <p><strong>Role:</strong> Native graph database & visual analytics.<br>
+            <strong>Usage:</strong> Stores host topology, <code>COMMUNICATES_WITH</code> edges, and DHAP-Net <code>SIMULATED_PROPAGATION</code> paths with continuous risk properties for Cypher queries and Bloom exploration.</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <h4 style="font-size:13px; color:#94a3b8; margin-bottom:8px;">Ready Cypher Query for Neo4j Browser:</h4>
+          <div class="cypher-block">// Highest-risk candidate targets predicted by DHAP-Net (Delta=6h)
+MATCH (c:Host) WHERE c.propagation_prob > 0.02
+RETURN c ORDER BY c.propagation_prob DESC LIMIT 25;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function loadChart(filename, title, tool, desc) {
+      document.getElementById('chart-frame').src = filename;
+      document.getElementById('chart-title').innerText = title;
+      document.getElementById('tool-tag').innerText = tool;
+      document.getElementById('chart-desc').innerText = desc;
+
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+</html>

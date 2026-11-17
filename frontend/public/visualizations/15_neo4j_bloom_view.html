@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHAP-Net - Neo4j Bloom Visual Graph Simulation</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .bloom-badge {
+      background: linear-gradient(135deg, #00C49F, #0088FE);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .star {
+      width: 12px;
+      height: 12px;
+      background: #FF006E;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    }
+    .main-container {
+      display: flex;
+      flex: 1;
+      position: relative;
+    }
+    #network {
+      flex: 1;
+      height: 100%;
+      background: radial-gradient(circle at center, #111827 0%, #080c14 100%);
+    }
+    .sidebar {
+      width: 320px;
+      background: rgba(15, 23, 42, 0.95);
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .sidebar h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .prop-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .prop-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .prop-key { color: #94a3b8; }
+    .prop-val { color: #f1f5f9; font-weight: 500; }
+    .badge-comp { color: #ff006e; font-weight: 600; }
+    .badge-cand { color: #00c49f; font-weight: 600; }
+    .btn-action {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-action:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="bloom-badge">NEO4J BLOOM / BROWSER</span>
+      <h2 style="font-size: 16px; font-weight: 600;">Attack Propagation & Lateral Movement Topology</h2>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="star"></div><span>Compromised Seed / Foothold</span></div>
+      <div class="legend-item"><div class="dot" style="background:#FFB703;"></div><span>High-Risk Candidate (p &ge; 0.02)</span></div>
+      <div class="legend-item"><div class="dot" style="background:#06D6A0;"></div><span>Low-Risk Candidate</span></div>
+      <div class="legend-item"><div style="width:20px;height:2px;background:#FF006E;"></div><span>COMPROMISED (Red-Team)</span></div>
+      <div class="legend-item"><div style="width:20px;height:2px;background:#3A86FF;"></div><span>COMMUNICATES_WITH (NetFlow)</span></div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div id="network"></div>
+    <div class="sidebar">
+      <h3>Inspector Panel</h3>
+      <p style="color:#94a3b8; font-size:12px; margin-bottom:16px;">
+        Click any host node or propagation edge to inspect its attributes, Bayesian credible bounds, and topological hop distance.
+      </p>
+
+      <div id="selected-info">
+        <div class="prop-card">
+          <div style="text-align: center; color: #64748b; padding: 20px 0;">
+            No entity currently selected.<br>Select a node to inspect.
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:20px;">Bloom Perspective Rules</h3>
+      <div class="prop-card">
+        <div class="prop-row"><span class="prop-key">Layout:</span><span class="prop-val">ForceAtlas2 Based</span></div>
+        <div class="prop-row"><span class="prop-key">Seed Nodes:</span><span class="prop-val">Red-Team Auth Hosts</span></div>
+        <div class="prop-row"><span class="prop-key">Candidate Filter:</span><span class="prop-val">2-Hop BFS Frontier</span></div>
+        <div class="prop-row"><span class="prop-key">Bayesian Head:</span><span class="prop-val">LogNormal Rates</span></div>
+        <div class="prop-row"><span class="prop-key">Rollouts:</span><span class="prop-val">M=1000 Gillespie</span></div>
+      </div>
+      
+      <div style="margin-top: 16px;">
+        <button class="btn-action" onclick="resetView()" style="width:100%;">Reset View & Focus</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Host Nodes Data
+    const rawNodes = [
+      { id: "C17693", label: "C17693\n(Foothold)", group: "seed", risk: 1.0, type: "Initial Foothold", in_deg: 412, out_deg: 890, ci: "1.00 [1.00, 1.00]" },
+      { id: "C1003", label: "C1003\n(Compromised)", group: "seed", risk: 1.0, type: "Compromised Target", in_deg: 245, out_deg: 320, ci: "1.00 [1.00, 1.00]" },
+      { id: "C305", label: "C305\n(Compromised)", group: "seed", risk: 1.0, type: "Compromised Target", in_deg: 189, out_deg: 210, ci: "1.00 [1.00, 1.00]" },
+      { id: "C458", label: "C458\n(Compromised)", group: "seed", risk: 1.0, type: "Compromised Target", in_deg: 160, out_deg: 140, ci: "1.00 [1.00, 1.00]" },
+      { id: "C2100", label: "C2100\n(High Risk)", group: "high", risk: 0.0547, type: "1-Hop Candidate", in_deg: 54, out_deg: 62, ci: "0.0547 [0.012, 0.098]" },
+      { id: "C1842", label: "C1842\n(High Risk)", group: "high", risk: 0.0482, type: "1-Hop Candidate", in_deg: 41, out_deg: 38, ci: "0.0482 [0.009, 0.087]" },
+      { id: "C921", label: "C921\n(High Risk)", group: "high", risk: 0.0395, type: "2-Hop Candidate", in_deg: 29, out_deg: 31, ci: "0.0395 [0.004, 0.076]" },
+      { id: "C5521", label: "C5521\n(High Risk)", group: "high", risk: 0.0310, type: "2-Hop Candidate", in_deg: 35, out_deg: 18, ci: "0.0310 [0.002, 0.065]" },
+      { id: "C1065", label: "C1065\n(Low Risk)", group: "low", risk: 0.0082, type: "2-Hop Candidate", in_deg: 12, out_deg: 14, ci: "0.0082 [0.000, 0.021]" },
+      { id: "C840", label: "C840\n(Low Risk)", group: "low", risk: 0.0041, type: "2-Hop Candidate", in_deg: 8, out_deg: 9, ci: "0.0041 [0.000, 0.012]" },
+      { id: "C3148", label: "C3148\n(Low Risk)", group: "low", risk: 0.0025, type: "2-Hop Candidate", in_deg: 5, out_deg: 7, ci: "0.0025 [0.000, 0.008]" },
+      { id: "C391", label: "C391\n(Low Risk)", group: "low", risk: 0.0019, type: "2-Hop Candidate", in_deg: 4, out_deg: 6, ci: "0.0019 [0.000, 0.006]" }
+    ];
+
+    const rawEdges = [
+      { from: "C17693", to: "C1003", label: "COMPROMISED\n(U620@DOM1)", color: "#FF006E", width: 3, dashes: false },
+      { from: "C17693", to: "C305", label: "COMPROMISED\n(U748@DOM1)", color: "#FF006E", width: 3, dashes: false },
+      { from: "C1003", to: "C458", label: "COMPROMISED\n(U620@DOM1)", color: "#FF006E", width: 3, dashes: false },
+      { from: "C17693", to: "C2100", label: "COMMUNICATES_WITH\n(TCP 445)", color: "#3A86FF", width: 1.5, dashes: false },
+      { from: "C1003", to: "C1842", label: "COMMUNICATES_WITH\n(TCP 389)", color: "#3A86FF", width: 1.5, dashes: false },
+      { from: "C2100", to: "C921", label: "COMMUNICATES_WITH\n(TCP 88)", color: "#3A86FF", width: 1.2, dashes: false },
+      { from: "C1842", to: "C5521", label: "COMMUNICATES_WITH\n(TCP 135)", color: "#3A86FF", width: 1.2, dashes: false },
+      { from: "C458", to: "C1065", label: "COMMUNICATES_WITH\n(UDP 53)", color: "#3A86FF", width: 1, dashes: false },
+      { from: "C1065", to: "C840", label: "COMMUNICATES_WITH\n(TCP 80)", color: "#3A86FF", width: 1, dashes: false },
+      { from: "C840", to: "C3148", label: "COMMUNICATES_WITH\n(TCP 443)", color: "#3A86FF", width: 1, dashes: false },
+      { from: "C3148", to: "C391", label: "COMMUNICATES_WITH\n(TCP 445)", color: "#3A86FF", width: 1, dashes: false },
+      { from: "C17693", to: "C2100", label: "SIMULATED_PROPAGATION\n(P=0.0547)", color: "#8338EC", width: 2, dashes: true },
+      { from: "C1003", to: "C1842", label: "SIMULATED_PROPAGATION\n(P=0.0482)", color: "#8338EC", width: 2, dashes: true }
+    ];
+
+    const nodes = new vis.DataSet(rawNodes.map(n => {
+      let color = "#06D6A0";
+      let shape = "dot";
+      let size = 18;
+      if (n.group === "seed") {
+        color = "#FF006E";
+        shape = "star";
+        size = 28;
+      } else if (n.group === "high") {
+        color = "#FFB703";
+        shape = "dot";
+        size = 22;
+      }
+      return {
+        id: n.id,
+        label: n.label,
+        shape: shape,
+        size: size,
+        color: { background: color, border: "#ffffff", highlight: { background: "#ffffff", border: color } },
+        font: { color: "#ffffff", size: 12, face: "Inter" },
+        borderWidth: 2,
+        shadow: true,
+        extra: n
+      };
+    }));
+
+    const edges = new vis.DataSet(rawEdges.map((e, idx) => ({
+      id: "e_" + idx,
+      from: e.from,
+      to: e.to,
+      label: e.label,
+      arrows: "to",
+      color: { color: e.color, highlight: "#ffffff" },
+      width: e.width,
+      dashes: e.dashes,
+      font: { color: "#94a3b8", size: 9, face: "JetBrains Mono", align: "middle" },
+      smooth: { type: "curvedCW", roundness: 0.15 }
+    })));
+
+    const container = document.getElementById('network');
+    const data = { nodes: nodes, edges: edges };
+    const options = {
+      physics: {
+        forceAtlas2Based: {
+          gravitationalConstant: -70,
+          centralGravity: 0.01,
+          springLength: 120,
+          springConstant: 0.08
+        },
+        maxVelocity: 50,
+        solver: 'forceAtlas2Based',
+        timestep: 0.35,
+        stabilization: { iterations: 150 }
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 100,
+        navigationButtons: true,
+        keyboard: true
+      }
+    };
+
+    const network = new vis.Network(container, data, options);
+
+    network.on("click", function(params) {
+      if (params.nodes.length > 0) {
+        const nodeId = params.nodes[0];
+        const nodeData = nodes.get(nodeId).extra;
+        const infoEl = document.getElementById("selected-info");
+        infoEl.innerHTML = `
+          <div class="prop-card">
+            <h4 style="color:#38bdf8; margin-bottom:8px;">Node: ${nodeData.id}</h4>
+            <div class="prop-row"><span class="prop-key">Type:</span><span class="prop-val">${nodeData.type}</span></div>
+            <div class="prop-row"><span class="prop-key">Status:</span><span class="prop-val ${nodeData.group==='seed'?'badge-comp':'badge-cand'}">${nodeData.group==='seed'?'COMPROMISED':'CANDIDATE'}</span></div>
+            <div class="prop-row"><span class="prop-key">In-Degree:</span><span class="prop-val">${nodeData.in_deg}</span></div>
+            <div class="prop-row"><span class="prop-key">Out-Degree:</span><span class="prop-val">${nodeData.out_deg}</span></div>
+            <div class="prop-row"><span class="prop-key">Risk Score:</span><span class="prop-val" style="color:#fbbf24">${nodeData.risk.toFixed(4)}</span></div>
+            <div class="prop-row"><span class="prop-key">90% CI:</span><span class="prop-val">${nodeData.ci}</span></div>
+          </div>
+        `;
+      }
+    });
+
+    function resetView() {
+      network.fit({ animation: { duration: 800, easingFunction: "easeInOutQuad" } });
+    }
+  </script>
+</body>
+</html>
